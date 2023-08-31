@@ -52,3 +52,5 @@ Example below (obtained by running `python test.py assets/threegorges-1024x1127.
 * Second panel: original image + noise
 * Third panel: original image + noise + NLM
 * Fourth panel: difference between original image and original image + noise + NLM
+
+**Note on benchmarking:** while 2d benchmarks are reasonable, 3d benchmarks will take a lot of time because of `scikit-image`'s implementation. Expect times of ~4,000 seconds for a $256 \times 256 \times 256$ images with a neighbourhood size of 17 (`nlm_torch` ran in ~70-80 seconds 😊).
