@@ -1,3 +1,13 @@
+"""
+Functions for 3d NLM using torch.
+"""
+
+__author__ = "José Guilherme de Almeida"
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "José Guilherme de Almeida"
+__email__ = "jose.almeida@research.fchampalimaud.org"
+
 import torch
 import einops
 import torch.nn.functional as F

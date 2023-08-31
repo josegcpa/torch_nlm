@@ -1,7 +1,16 @@
+"""
+Generic operations for torch_nlm.
+"""
+
+__author__ = "José Guilherme de Almeida"
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "José Guilherme de Almeida"
+__email__ = "jose.almeida@research.fchampalimaud.org"
+
 import numpy as np
 import torch
 import torch.nn.functional as F
-import einops
 from itertools import product 
 from tqdm import tqdm
 from typing import Tuple,List
