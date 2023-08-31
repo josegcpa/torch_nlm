@@ -14,7 +14,7 @@ Non-local means takes a long time compute as it is quadratic for the number of p
 
 I only benchmarked `torch_nlm` against `scikit-image` in 2d because the latter is prohibitively slow in 3d. Results below.
 
-![](assets/test_output.jpg)
+![](assets/benchmark_results.png)
 
 ### Brief explanation of non-local means (NLM)
 
