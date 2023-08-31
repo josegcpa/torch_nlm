@@ -1,0 +1,5 @@
+einops==0.6.1
+numpy==1.23.5
+Pillow==10.0.0
+torch==2.0.1
+tqdm==4.64.1
