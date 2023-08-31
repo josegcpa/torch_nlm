@@ -4,7 +4,7 @@ import time
 import numpy as np
 from skimage.restoration import denoise_nl_means, estimate_sigma
 import torch
-from torch_nlm import apply_nonlocal_means_2d_mem_efficient
+from torch_nlm import nlm2d
 
 image_sizes = [[128,128],
                [256,256],
@@ -50,11 +50,11 @@ for neighbourhood_size in neighbourhood_sizes:
         image_with_noise_torch = torch.as_tensor(image_with_noise).to(dev)
         if i == 0:
             # wake pytorch up
-            denoise_fast = apply_nonlocal_means_2d_mem_efficient(
+            denoise_fast = nlm2d(
                 image_with_noise_torch,kernel_size=neighbourhood_size,kernel_size_mean=5,
                 sub_filter_size=sub_filter_size)
         a = time.time()
-        denoise_fast = apply_nonlocal_means_2d_mem_efficient(
+        denoise_fast = nlm2d(
             image_with_noise_torch,kernel_size=neighbourhood_size,kernel_size_mean=5,
             sub_filter_size=sub_filter_size)
         b = time.time()

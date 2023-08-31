@@ -19,8 +19,6 @@ def apply_nonlocal_means_3d(X:torch.Tensor,
     Args:
         X (torch.Tensor): input tensor with shape [h,w,d].
         kernel_size (int, optional): size of neighbourhood. Defaults to 3.
-        ndim (int, optional): number of dimensions. Must be 2 or 3. Defaults to
-            2.
         std (float, optional): standard deviation for weights. Defaults to 1.0.
         kernel_size_mean (int, optional): kernel size for the initial mean
         filtering.
@@ -60,8 +58,6 @@ def apply_windowed_nonlocal_means_3d(X:torch.Tensor,
     Args:
         X (torch.Tensor): input tensor with shape [h,w,d].
         kernel_size (int, optional): size of neighbourhood. Defaults to 3.
-        ndim (int, optional): number of dimensions. Must be 2 or 3. Defaults to
-            2.
         std (float, optional): standard deviation for weights. Defaults to 1.0.
         kernel_size_mean (int, optional): kernel size for the initial mean
             filtering.
@@ -141,8 +137,6 @@ def apply_nonlocal_means_3d_mem_efficient(X:torch.Tensor,
     Args:
         X (torch.Tensor): input tensor with shape [h,w,d].
         kernel_size (int, optional): size of neighbourhood. Defaults to 3.
-        ndim (int, optional): number of dimensions. Must be 2 or 3. Defaults to
-            2.
         std (float, optional): standard deviation for weights. Defaults to 1.0.
         kernel_size_mean (int, optional): kernel size for the initial mean
             filtering.
@@ -162,3 +156,5 @@ def apply_nonlocal_means_3d_mem_efficient(X:torch.Tensor,
         X,kernel_size=kernel_size,std=std,
         ndim=ndim,sub_filter_size=sub_filter_size).squeeze(0).squeeze(0)
     return output
+
+nlm3d = apply_nonlocal_means_3d_mem_efficient

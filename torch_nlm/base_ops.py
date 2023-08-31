@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import einops
 from itertools import product 
 from tqdm import tqdm
-from typing import Any,Callable,Tuple,List
+from typing import Tuple,List
 
 def get_gaussian_kernel(kernel_size:int=5, sigma:float=1.,ndim:int=2)->np.ndarray:
     """Creates gaussian kernel with side length kernel_size and a standard 
@@ -212,7 +212,8 @@ def non_local_means_loop_index(X:torch.Tensor,
     
     def calculate_weights_2d(X:torch.Tensor,
                              idxs:List[torch.Tensor],
-                             std_2:torch.Tensor):
+                             std_2:torch.Tensor)->Tuple[torch.Tensor,
+                                                        torch.Tensor]:
         n = len(idxs[0])
         idxs = cat_idxs(idxs)
         neighbours = X[:,:,idxs[0],idxs[1]].reshape(
@@ -223,7 +224,8 @@ def non_local_means_loop_index(X:torch.Tensor,
 
     def calculate_weights_3d(X:torch.Tensor,
                              idxs:List[torch.Tensor],
-                             std_2:torch.Tensor):
+                             std_2:torch.Tensor)->Tuple[torch.Tensor,
+                                                        torch.Tensor]:
         n = len(idxs[0])
         idxs = cat_idxs(idxs)
         neighbours = X[:,:,idxs[0],idxs[1],idxs[2]].reshape(

@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "nlm-torch"
+version = "0.1.0"
+description = "PyTorch-based implementation of non-local means with GPU support."
+authors = ["josegcpa <jose.almeida@research.fchampalimaud.pt>"]
+license = "LICENSE"
+readme = "README.md"
+packages = [{include = "torch_nlm"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+einops = "0.6.1"
+numpy = "1.23.5"
+Pillow = "10.0.0"
+torch = "2.0.1"
+tqdm = "4.64.1"
+
+[tool.poetry.group.dev.dependencies]
+scikit-image = "0.19.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
