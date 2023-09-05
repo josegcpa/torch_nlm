@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from pathlib import Path
 from PIL import Image
-from torch_nlm import apply_nonlocal_means_2d_mem_efficient
+from torch_nlm import nlm2d
 
 image_path = sys.argv[1]
 output_path = os.path.join(str(Path(image_path).parent),"test_output.jpg")
