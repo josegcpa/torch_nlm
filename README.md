@@ -38,6 +38,12 @@ To use this package all you have to do is clone and install this (a `pyproject.t
 pip install torch_nlm
 ```
 
+Or, if you already have all the dependencies:
+
+```bash
+pip install torch_nlm --no-dependencies
+```
+
 Two main functions are exported: `nlm2d` and `nlm3d`, which are aliases for the most efficient `torch`-based NLMM versions (`apply_nonlocal_means_2d_mem_efficient` and `apply_nonlocal_means_3d_mem_efficient`), respectively. So if you want to apply it to your favourite image and have a CUDA compatible GPU:
 
 ```python
