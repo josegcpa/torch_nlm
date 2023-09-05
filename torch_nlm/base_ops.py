@@ -14,6 +14,7 @@ import torch.nn.functional as F
 from itertools import product 
 from tqdm import tqdm
 from typing import Tuple,List
+from collections import deque
 
 def get_gaussian_kernel(kernel_size:int=5, sigma:float=1.,ndim:int=2)->np.ndarray:
     """Creates gaussian kernel with side length kernel_size and a standard 
@@ -200,96 +201,93 @@ def non_local_means_loop_index(X:torch.Tensor,
         torch.Tensor: non local mean-normalised input.
     """
     def cat_idxs(idxs:List[torch.Tensor]):
-        for i in range(len(idxs)):
-            idxs[i] = torch.cat(idxs[i])
+        idxs = torch.cat(idxs,1)
         return idxs
 
-    def preprocess_idxs(idxs:List[torch.Tensor],
-                        original_idxs:List[torch.Tensor],
-                        sizes:List[int]):
-        for i in range(len(idxs)):
-            d = torch.abs(original_idxs[i] - idxs[i])
-            idxs[i] = torch.where(
-                idxs[i] < 0, 
-                original_idxs[i] + d,
-                idxs[i])
-            idxs[i] = torch.where(
-                idxs[i] > sizes[i] - 1, 
-                original_idxs[i] - d,
-                idxs[i])
+    def preprocess_idxs(idxs: List[torch.Tensor],
+                        original_idxs: List[torch.Tensor],
+                        sizes: List[int]):
+        d = torch.abs(original_idxs - idxs)
+        idxs = torch.where(idxs < 0, d - original_idxs, idxs)
+        idxs = torch.where(idxs > sizes - 1, original_idxs - d, idxs)
         return idxs
-    
+
+    def weight_operation(X,neighbours,std_2):
+        return torch.square(X - neighbours).negative().divide(std_2).exp()
+
     def calculate_weights_2d(X:torch.Tensor,
                              idxs:List[torch.Tensor],
                              std_2:torch.Tensor)->Tuple[torch.Tensor,
                                                         torch.Tensor]:
-        n = len(idxs[0])
+        n = len(idxs)
         idxs = cat_idxs(idxs)
         neighbours = X[:,:,idxs[0],idxs[1]].reshape(
             1,n,X.shape[2],X.shape[3])
-        weights = torch.square(
-            X - neighbours).negative().divide(std_2).exp()
+        weights = weight_operation(X, neighbours, std_2)
         return weights, neighbours
 
     def calculate_weights_3d(X:torch.Tensor,
                              idxs:List[torch.Tensor],
                              std_2:torch.Tensor)->Tuple[torch.Tensor,
                                                         torch.Tensor]:
-        n = len(idxs[0])
+        n = len(idxs)
         idxs = cat_idxs(idxs)
         neighbours = X[:,:,idxs[0],idxs[1],idxs[2]].reshape(
             1,n,X.shape[2],X.shape[3],X.shape[4])
-        weights = torch.square(
-            X - neighbours).negative().divide(std_2).exp()
+        weights = weight_operation(X, neighbours, std_2)
         return weights, neighbours
 
     weights_sum = torch.zeros_like(X)
     output = torch.zeros_like(X)
     k2 = kernel_size // 2
     std_2 = torch.as_tensor(std**2).to(X)
+    counter = 0
     if ndim == 2:
         _,_,H,W = X.shape
-        h,w = torch.where(X[0,0] == X[0,0])
-        all_idxs = [[],[]]
-        range_h = torch.arange(-k2,k2+1,dtype=torch.long)
-        range_w = torch.arange(-k2,k2+1,dtype=torch.long)
-        for i in range_h:
-            for j in range_w:
-                new_idxs = preprocess_idxs(
-                    [h + i,w + j],[h,w],[H,W])
-                all_idxs[0].append(new_idxs[0])
-                all_idxs[1].append(new_idxs[1])
-                if len(all_idxs[0]) >= sub_filter_size:
-                    weights,neighbours = calculate_weights_2d(X,all_idxs,std_2)
-                    weights_sum += torch.sum(weights,1)
-                    output += weights.multiply(neighbours).sum(1)
-                    all_idxs = [[],[]]
-        if len(all_idxs[0]) >= 0:
+        coords = torch.stack(torch.where(X[0,0] == X[0,0]))
+        tmp_idxs = torch.zeros_like(coords)
+        size = torch.as_tensor([H,W]).reshape(ndim,1).to(coords)
+        all_idxs = []
+        range_h = torch.arange(-k2,k2+1)
+        range_w = torch.arange(-k2,k2+1)
+        for i,j in product(range_h,range_w):
+            counter += 1
+            tmp_idxs[0][:] = coords[0] + i
+            tmp_idxs[1][:] = coords[1] + j
+            all_idxs.append(preprocess_idxs(tmp_idxs,coords,size))
+            if counter >= sub_filter_size:
+                weights,neighbours = calculate_weights_2d(X,all_idxs,std_2)
+                weights_sum += torch.sum(weights,1)
+                output += weights.multiply(neighbours).sum(1)
+                all_idxs = []
+                counter = 0
+        if counter > 0:
             weights,neighbours = calculate_weights_2d(X,all_idxs,std_2)
             weights_sum += torch.sum(weights,1)
             output += weights.multiply(neighbours).sum(1)
 
     if ndim == 3:
         _,_,H,W,D = X.shape
-        h,w,d = torch.where(X[0,0] == X[0,0])
-        all_idxs = [[],[],[]]
-        range_h = torch.arange(-k2,k2+1,dtype=torch.long)
-        range_w = torch.arange(-k2,k2+1,dtype=torch.long)
-        range_d = torch.arange(-k2,k2+1,dtype=torch.long)
-        for i in range_h:
-            for j in range_w:
-                for k in range_d:
-                    new_idxs = preprocess_idxs(
-                        [h + i,w + j,d + k],[h,w,d],[H,W,D])
-                    all_idxs[0].append(new_idxs[0])
-                    all_idxs[1].append(new_idxs[1])
-                    all_idxs[2].append(new_idxs[2])
-                    if len(all_idxs[0]) >= sub_filter_size:
-                        weights,neighbours = calculate_weights_3d(X,all_idxs,std_2)
-                        weights_sum += torch.sum(weights,1)
-                        output += weights.multiply(neighbours).sum(1)
-                        all_idxs = [[],[],[]]
-        if len(all_idxs[0]) >= 0:
+        coords = torch.stack(torch.where(X[0,0] == X[0,0]))
+        tmp_idxs = torch.zeros_like(coords)
+        size = torch.as_tensor([H,W,D]).reshape(ndim,1).to(coords)
+        all_idxs = []
+        range_h = torch.arange(-k2,k2+1)
+        range_w = torch.arange(-k2,k2+1)
+        range_d = torch.arange(-k2,k2+1)
+        for i,j,k in product(range_h,range_w,range_d):
+            counter += 1
+            tmp_idxs[0][:] = coords[0] + i
+            tmp_idxs[1][:] = coords[1] + j
+            tmp_idxs[2][:] = coords[2] + k
+            all_idxs.append(preprocess_idxs(tmp_idxs,coords,size))
+            if counter >= sub_filter_size:
+                weights,neighbours = calculate_weights_3d(X,all_idxs,std_2)
+                weights_sum += torch.sum(weights,1)
+                output += weights.multiply(neighbours).sum(1)
+                all_idxs = []
+                counter = 0
+        if counter > 0:
             weights,neighbours = calculate_weights_3d(X,all_idxs,std_2)
             weights_sum += torch.sum(weights,1)
             output += weights.multiply(neighbours).sum(1)
