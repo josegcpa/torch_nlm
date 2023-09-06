@@ -30,6 +30,8 @@ In other words, the non-local means of a given pixel is the weighted average of 
 
 ## Usage
 
+### Installation
+
 To use this package all you have to do is clone and install this (a `pyproject.toml` is provided so that you can easily install this with [`poetry`](https://python-poetry.org/)). Alternatively, use `requirements.txt` with `pip` (i.e. `pip install -r requirements.txt`).
 
 **Installation with pip:** this is probably the version which will be the less painful to use: 
@@ -44,6 +46,14 @@ Or, if you already have all the dependencies:
 pip install torch_nlm --no-dependencies
 ```
 
+**Installation with `setup.py`:** also easy to use: 
+
+```bash
+python setup.py install
+```
+
+### `torch_nlm` usage
+
 Two main functions are exported: `nlm2d` and `nlm3d`, which are aliases for the most efficient `torch`-based NLMM versions (`apply_nonlocal_means_2d_mem_efficient` and `apply_nonlocal_means_3d_mem_efficient`), respectively. So if you want to apply it to your favourite image and have a CUDA compatible GPU:
 
 ```python
@@ -52,6 +62,7 @@ from torch_nlm import nlm2d
 
 image = ... # here you define your image
 
+# allocate image to your favourite device
 image_torch = torch.as_tensor(image).to("cuda")
 
 image_nlm = nlm2d(image_torch, # the image
@@ -63,6 +74,8 @@ image_nlm = nlm2d(image_torch, # the image
 ```
 
 `sub_filter_size` is what allows large neighbourhoods - given that users may have relatively small GPU cards, they may opt for smaller `sub_filter_sizes` which will enable them to load much smaller sets of neighbourhoods for distance/weight calculations. You may want to run a few tests to figure out the best `sub_filter_size` before deploying this *en masse*.
+
+Since GPU allocation can be time consuming and the user may have a lot of images to process, it might not be a terrible idea to process images as batches rather than as separate scripts.
 
 ## Implementation details
 
